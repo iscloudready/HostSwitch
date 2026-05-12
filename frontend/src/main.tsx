@@ -1,6 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Boxes, DatabaseBackup, Download, Globe2, KeyRound, Network, RefreshCw, ServerCog, ShieldCheck } from "lucide-react";
+import {
+  Boxes,
+  CheckCircle2,
+  ChevronRight,
+  Code2,
+  Database,
+  DatabaseBackup,
+  Download,
+  Globe2,
+  KeyRound,
+  Layers3,
+  Network,
+  Plus,
+  Search,
+  ServerCog,
+  ShieldCheck,
+  ShieldX,
+  Wrench,
+} from "lucide-react";
 import "./styles.css";
 
 type Environment = { id: number; name: string; is_active: boolean };
@@ -8,7 +26,7 @@ type Group = { id: number; environment_id: number; name: string; is_enabled: boo
 type HostEntry = { id: number; group_id: number; group_name: string; domain: string; ip_address: string; status: string; source: string; tags: string };
 type Backup = { id: number; file_path: string; created_at: string; trigger_reason: string };
 type DockerSuggestion = { name: string; suggested_domain: string; source: string };
-type Tab = "Dashboard" | "Environments" | "Docker Discovery" | "Backups" | "Settings" | "API";
+type Tab = "Dashboard" | "Environments" | "Groups" | "Docker Discovery" | "Backups" | "Settings" | "API";
 
 const apiBase = import.meta.env.VITE_API_BASE ?? "http://localhost:18080";
 
@@ -80,12 +98,16 @@ function App() {
     <main className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <Globe2 size={24} />
-          <span>HostSwitch</span>
+          <div className="brand-mark"><Globe2 size={22} /></div>
+          <div>
+            <span>HostSwitch</span>
+            <small>Local Domain Control Center</small>
+          </div>
         </div>
         {([
           ["Dashboard", Network],
           ["Environments", ServerCog],
+          ["Groups", Layers3],
           ["Docker Discovery", Boxes],
           ["Backups", DatabaseBackup],
           ["Settings", ShieldCheck],
@@ -96,6 +118,12 @@ function App() {
             <span>{label}</span>
           </button>
         ))}
+        <div className="system-card">
+          <p>SYSTEM STATUS</p>
+          <StatusLine label="Backend" value="Online" />
+          <StatusLine label="Docker" value="Connected" />
+          <StatusLine label="Hosts File" value="Synced" />
+        </div>
       </aside>
 
       <section className="workspace">
@@ -103,6 +131,7 @@ function App() {
           <div>
             <p className="eyebrow">Local Domain Control Center</p>
             <h1>{activeTab}</h1>
+            <p className="subtitle">Manage local domains, environments and hosts with confidence.</p>
           </div>
           <div className="top-actions">
             <button className="secondary" onClick={() => importSystemHosts("active")}>
@@ -133,6 +162,7 @@ function App() {
         {activeTab === "Environments" && (
           <EnvironmentsView environments={environments} activeEnvironment={activeEnvironment} hosts={hosts} groups={groups} onSwitchEnvironment={switchEnvironment} />
         )}
+        {activeTab === "Groups" && <GroupsView activeEnvironment={activeEnvironment} groups={groups} hosts={hosts} onToggleGroup={toggleGroup} />}
         {activeTab === "Docker Discovery" && <DockerDiscoveryView suggestions={dockerSuggestions} onRefresh={loadDockerSuggestions} />}
         {activeTab === "Backups" && <BackupsView backups={backups} onCreateBackup={createBackup} onRefresh={loadBackups} />}
         {activeTab === "Settings" && <SettingsView activeEnvironment={activeEnvironment} />}
@@ -161,15 +191,52 @@ function DashboardView({
     <>
       <EnvironmentToolbar environments={environments} activeEnvironment={activeEnvironment} onSwitchEnvironment={onSwitchEnvironment} />
       <section className="summary-grid">
-        <Metric label="Groups" value={groups.length} />
-        <Metric label="Enabled Hosts" value={hosts.filter((host) => host.status === "enabled").length} />
-        <Metric label="Docker Sources" value={hosts.filter((host) => host.source === "docker").length} />
+        <Metric label="Groups" value={groups.length} detail="Active groups" icon={<Layers3 size={25} />} tone="green" />
+        <Metric label="Enabled Hosts" value={hosts.filter((host) => host.status === "enabled").length} detail={`Across ${groups.length} groups`} icon={<Globe2 size={25} />} tone="blue" />
+        <Metric label="Docker Services" value={hosts.filter((host) => host.source === "docker").length} detail="Discovered" icon={<Boxes size={25} />} tone="purple" />
+        <Metric label="Backups" value={hosts.filter((host) => host.source === "system").length} detail="Imported hosts" icon={<ShieldCheck size={25} />} tone="orange" />
       </section>
       <section className="content-grid">
         <GroupsPanel activeEnvironment={activeEnvironment} groups={groups} onToggleGroup={onToggleGroup} />
         <HostsPanel hosts={hosts} />
       </section>
     </>
+  );
+}
+
+function GroupsView({
+  activeEnvironment,
+  groups,
+  hosts,
+  onToggleGroup,
+}: {
+  activeEnvironment?: Environment;
+  groups: Group[];
+  hosts: HostEntry[];
+  onToggleGroup: (group: Group) => void;
+}) {
+  return (
+    <section className="content-grid groups-page">
+      <GroupsPanel activeEnvironment={activeEnvironment} groups={groups} hosts={hosts} onToggleGroup={onToggleGroup} />
+      <section className="panel">
+        <div className="panel-title">
+          <h2>Group Coverage</h2>
+          <span>{activeEnvironment?.name ?? "No environment"}</span>
+        </div>
+        <div className="coverage-list">
+          {groups.map((group) => {
+            const count = hosts.filter((host) => host.group_id === group.id || host.group_name === group.name).length;
+            return (
+              <div className="coverage-row" key={group.id}>
+                <span>{group.name}</span>
+                <div className="coverage-track"><i style={{ width: `${Math.min(100, count * 12)}%` }} /></div>
+                <strong>{count}</strong>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </section>
   );
 }
 
@@ -198,9 +265,9 @@ function EnvironmentsView({
         ))}
       </section>
       <section className="summary-grid">
-        <Metric label="Active Groups" value={groups.filter((group) => group.is_enabled).length} />
-        <Metric label="Hosts In View" value={hosts.length} />
-        <Metric label="Disabled Groups" value={groups.filter((group) => !group.is_enabled).length} />
+        <Metric label="Active Groups" value={groups.filter((group) => group.is_enabled).length} detail="Enabled now" icon={<Layers3 size={25} />} tone="green" />
+        <Metric label="Hosts In View" value={hosts.length} detail={activeEnvironment?.name ?? "No environment"} icon={<Globe2 size={25} />} tone="blue" />
+        <Metric label="Disabled Groups" value={groups.filter((group) => !group.is_enabled).length} detail="Paused routing" icon={<ShieldX size={25} />} tone="orange" />
       </section>
     </>
   );
@@ -327,7 +394,7 @@ function EnvironmentToolbar({
   );
 }
 
-function GroupsPanel({ activeEnvironment, groups, onToggleGroup }: { activeEnvironment?: Environment; groups: Group[]; onToggleGroup: (group: Group) => void }) {
+function GroupsPanel({ activeEnvironment, groups, hosts, onToggleGroup }: { activeEnvironment?: Environment; groups: Group[]; hosts?: HostEntry[]; onToggleGroup: (group: Group) => void }) {
   return (
     <div className="panel">
       <div className="panel-title">
@@ -337,8 +404,11 @@ function GroupsPanel({ activeEnvironment, groups, onToggleGroup }: { activeEnvir
       <div className="group-list">
         {groups.map((group) => (
           <button className="group-row" key={group.id} onClick={() => onToggleGroup(group)}>
-            <span>{group.name}</span>
-            <span className={group.is_enabled ? "status enabled" : "status"}>{group.is_enabled ? "Enabled" : "Disabled"}</span>
+            <span className="group-name"><GroupIcon name={group.name} />{group.name}</span>
+            <span className="group-meta">
+              <b>{hosts?.filter((host) => host.group_id === group.id || host.group_name === group.name).length ?? 0}</b>
+              <ChevronRight size={16} />
+            </span>
           </button>
         ))}
       </div>
@@ -347,11 +417,29 @@ function GroupsPanel({ activeEnvironment, groups, onToggleGroup }: { activeEnvir
 }
 
 function HostsPanel({ hosts }: { hosts: HostEntry[] }) {
+  const [query, setQuery] = useState("");
+  const [groupFilter, setGroupFilter] = useState("all");
+  const groups = Array.from(new Set(hosts.map((host) => host.group_name).filter(Boolean)));
+  const filteredHosts = hosts.filter((host) => {
+    const haystack = `${host.domain} ${host.ip_address} ${host.group_name} ${host.tags} ${host.source}`.toLowerCase();
+    return haystack.includes(query.toLowerCase()) && (groupFilter === "all" || host.group_name === groupFilter);
+  });
+
   return (
     <div className="panel table-panel">
       <div className="panel-title">
         <h2>Hosts</h2>
-        <span>{hosts.length} entries</span>
+        <div className="host-tools">
+          <label className="search-box">
+            <Search size={16} />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search hosts..." />
+          </label>
+          <select value={groupFilter} onChange={(event) => setGroupFilter(event.target.value)}>
+            <option value="all">All Groups</option>
+            {groups.map((group) => <option key={group} value={group}>{group}</option>)}
+          </select>
+          <span>{filteredHosts.length} entries</span>
+        </div>
       </div>
       <table>
         <thead>
@@ -365,17 +453,17 @@ function HostsPanel({ hosts }: { hosts: HostEntry[] }) {
           </tr>
         </thead>
         <tbody>
-          {hosts.map((host) => (
+          {filteredHosts.map((host) => (
             <tr key={host.id}>
               <td>{host.domain}</td>
               <td>{host.ip_address}</td>
               <td>{host.group_name}</td>
               <td><TagList tags={host.tags} /></td>
               <td><span className={host.status === "enabled" ? "status enabled" : "status"}>{host.status}</span></td>
-              <td>{host.source}</td>
+              <td><span className={`source source-${host.source}`}>{host.source}</span></td>
             </tr>
           ))}
-          {hosts.length === 0 && (
+          {filteredHosts.length === 0 && (
             <tr>
               <td colSpan={6} className="empty">No hosts yet. Use Import Current to load entries into this environment.</td>
             </tr>
@@ -384,6 +472,27 @@ function HostsPanel({ hosts }: { hosts: HostEntry[] }) {
       </table>
     </div>
   );
+}
+
+function StatusLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="status-line">
+      <span><i />{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function GroupIcon({ name }: { name: string }) {
+  const lower = name.toLowerCase();
+  if (lower.includes("docker") || lower.includes("kubernetes")) return <Boxes size={16} />;
+  if (lower.includes("monitor")) return <Network size={16} />;
+  if (lower.includes("tool")) return <Wrench size={16} />;
+  if (lower.includes("blocked")) return <ShieldX size={16} />;
+  if (lower.includes("database")) return <Database size={16} />;
+  if (lower.includes("external")) return <Globe2 size={16} />;
+  if (lower.includes("ai")) return <Code2 size={16} />;
+  return <Layers3 size={16} />;
 }
 
 function TagList({ tags }: { tags: string }) {
@@ -418,11 +527,15 @@ function InfoPanel({ title, rows }: { title: string; rows: Array<[string, string
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value, detail, icon, tone }: { label: string; value: number; detail: string; icon: React.ReactNode; tone: string }) {
   return (
     <div className="metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <div className={`metric-icon ${tone}`}>{icon}</div>
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        <small>{detail}</small>
+      </div>
     </div>
   );
 }

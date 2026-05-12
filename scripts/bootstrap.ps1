@@ -268,13 +268,15 @@ function Stop-Dev {
     }
 }
 
-function Stop-ProcessOnPort {
+function Assert-PortAvailable {
     param([int]$Port)
-    $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-    foreach ($connection in $connections) {
-        if ($connection.OwningProcess -and $connection.OwningProcess -ne $PID) {
-            Stop-Process -Id $connection.OwningProcess -Force -ErrorAction SilentlyContinue
-        }
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Port)
+    try {
+        $listener.Start()
+    } catch {
+        throw "Port $Port is already in use. Stop the process using it or choose another smoke-test port."
+    } finally {
+        $listener.Stop()
     }
 }
 
@@ -300,7 +302,8 @@ function Invoke-UISmoke {
     $frontendProcess = $null
 
     docker rm -f $backendName 2>$null | Out-Null
-    Stop-ProcessOnPort $frontendPortSmoke
+    Assert-PortAvailable $frontendPortSmoke
+    Assert-PortAvailable $backendPortSmoke
     Invoke-DockerBuild
     try {
         Invoke-Checked "docker" @(

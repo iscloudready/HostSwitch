@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="HostSwitch is a local domain control center for hosts files, environments, Docker discovery, backups, and automation." />
+  <title>HostSwitch | Local Domain Control Center</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav-shell" aria-label="Primary navigation">
+      <a class="brand" href="#top" aria-label="HostSwitch home">
+        <span class="brand-mark">HS</span>
+        <span>
+          <strong>HostSwitch</strong>
+          <small>Local Domain Control Center</small>
+        </span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#quickstart">Quick Start</a>
+        <a href="https://github.com/iscloudready/HostSwitch">GitHub</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Hosts, environments, Docker discovery, and backups</p>
+        <h1>Stop editing hosts files by hand.</h1>
+        <p class="hero-text">
+          HostSwitch gives developers and DevOps teams a safer control center for local domains,
+          environment switching, Docker-aware routing, and repeatable hosts file updates.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="https://github.com/iscloudready/HostSwitch">View on GitHub</a>
+          <a class="button secondary" href="#quickstart">Run Locally</a>
+        </div>
+      </div>
+      <figure class="hero-image">
+        <img src="images/dashboard.png" alt="HostSwitch dashboard with grouped hosts and environment controls" />
+      </figure>
+    </section>
+
+    <section class="stats" aria-label="Project highlights">
+      <div>
+        <span>3</span>
+        <p>built-in environments</p>
+      </div>
+      <div>
+        <span>SQLite</span>
+        <p>local persistence</p>
+      </div>
+      <div>
+        <span>Docker</span>
+        <p>deployment ready</p>
+      </div>
+      <div>
+        <span>API</span>
+        <p>automation first</p>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">What it manages</p>
+        <h2>A safer workflow for local routing</h2>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="feature-kicker">Environments</span>
+          <h3>Switch DEV, STAGING, and PROD</h3>
+          <p>Keep domain routing organized by environment and apply only the entries you intend to activate.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-kicker">Groups</span>
+          <h3>Organize hosts by purpose</h3>
+          <p>Group AI stacks, monitoring, tools, local overrides, external routes, and blocked domains.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-kicker">Imports</span>
+          <h3>Classify existing hosts</h3>
+          <p>Load the current hosts file into SQLite with validation, source tracking, and useful tags.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-kicker">Backups</span>
+          <h3>Rollback with confidence</h3>
+          <p>Create automatic and manual backups before managed hosts output is applied.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-kicker">Docker</span>
+          <h3>Discover local services</h3>
+          <p>Find running containers and turn service names into suggested local domains.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-kicker">Automation</span>
+          <h3>Script the control plane</h3>
+          <p>Use REST endpoints for environment switching, imports, group toggles, applies, and backups.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="screenshots" class="section screenshots">
+      <div class="section-heading">
+        <p class="eyebrow">Product preview</p>
+        <h2>Built like a daily operations dashboard</h2>
+      </div>
+      <div class="screenshot-grid">
+        <figure>
+          <img src="images/dashboard.png" alt="Dashboard view showing hosts, groups, and status cards" />
+          <figcaption>Dashboard</figcaption>
+        </figure>
+        <figure>
+          <img src="images/environments.png" alt="Environment management screen" />
+          <figcaption>Environment management</figcaption>
+        </figure>
+        <figure>
+          <img src="images/docker-discovery.png" alt="Docker discovery screen" />
+          <figcaption>Docker discovery</figcaption>
+        </figure>
+        <figure>
+          <img src="images/api.png" alt="API access screen" />
+          <figcaption>API reference</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="quickstart" class="section quickstart">
+      <div class="section-heading">
+        <p class="eyebrow">Run it locally</p>
+        <h2>One script for the common workflow</h2>
+      </div>
+      <div class="quickstart-grid">
+        <div class="terminal">
+          <pre><code>./scripts/bootstrap.ps1 -Task dev</code></pre>
+          <pre><code>./scripts/bootstrap.ps1 -Task test</code></pre>
+          <pre><code>./scripts/bootstrap.ps1 -Task ui-smoke</code></pre>
+        </div>
+        <div class="quickstart-copy">
+          <h3>Safe by default in development</h3>
+          <p>
+            The dev setup writes to <code>data/hosts.preview</code>, so you can test imports,
+            applies, backups, and UI workflows without touching the real system hosts file.
+          </p>
+          <a class="button secondary" href="https://github.com/iscloudready/HostSwitch">Read the README</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <strong>HostSwitch</strong>
+      <p>Modern local domain control center for developers and DevOps.</p>
+    </div>
+    <a href="https://github.com/iscloudready/HostSwitch">GitHub Repository</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

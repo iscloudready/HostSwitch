@@ -43,13 +43,14 @@ for (const environment of ["STAGING", "PROD"]) {
 await page.getByRole("button", { name: "DEV" }).click();
 await page.getByText("voxera.local").first().waitFor({ state: "visible", timeout: 10000 });
 
-for (const navItem of ["Environments", "Docker Discovery", "Backups", "Settings", "API", "Dashboard"]) {
+for (const navItem of ["Environments", "Groups", "Docker Discovery", "Backups", "Settings", "API", "Dashboard"]) {
   await page.getByRole("button", { name: navItem }).click();
-  await page.getByRole("heading", { name: navItem, exact: true }).waitFor({ state: "visible", timeout: 10000 });
+  await page.locator("h1").filter({ hasText: navItem }).waitFor({ state: "visible", timeout: 10000 });
 }
 
 const expectedContent = [
   ["Environments", "Hosts In View"],
+  ["Groups", "Group Coverage"],
   ["Docker Discovery", "Discovered Services"],
   ["Backups", "Backup History"],
   ["Settings", "Hosts File Safety"],

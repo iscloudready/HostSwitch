@@ -1,218 +1,72 @@
 # HostSwitch
 
-<div align="center">
+HostSwitch is a local domain control center for developers, DevOps engineers, and homelab builders. It gives you a modern dashboard for hosts file management, environment switching, grouped local domains, Docker-aware discovery, backups, and automation.
 
-# HostSwitch
+![HostSwitch dashboard](./docs/images/dashboard.png)
 
-### Modern Local Domain Control Center for Developers & DevOps
+## Why HostSwitch
 
-Manage hosts files, environments, Docker services, and local domain routing from one modern web interface.
+Editing a hosts file by hand is easy to get wrong and hard to share. HostSwitch wraps that workflow in a safer system:
 
----
+- Import existing hosts entries into SQLite.
+- Categorize entries into environments and groups.
+- Switch between DEV, STAGING, and PROD without hand-editing system files.
+- Preview and apply managed hosts output with backups.
+- Discover Docker services and suggest local domains.
+- Automate common workflows through a REST API.
 
-<img src="./docs/images/dashboard-hero.png" alt="HostSwitch Dashboard" width="100%" />
+The goal is simple: you should not need to manually edit your hosts file again.
 
-</div>
+## Current Features
 
----
+- Environment management for DEV, STAGING, and PROD.
+- Group management with enable and disable controls.
+- Hosts import, categorization, tagging, search, and filtering.
+- Automatic backup records for imported and applied hosts.
+- Docker discovery endpoint and UI flow.
+- Safe development mode using `data/hosts.preview`.
+- SQLite persistence.
+- Docker deployment support.
+- PowerShell bootstrap script for dependencies, build, test, package, and dev tasks.
+- GitHub Pages documentation site under `docs/`.
 
-# ✨ Features
+## Quick Start
 
-## 🌍 Environment Switching
+### Prerequisites
 
-Instantly switch between:
+- Docker Desktop or a compatible Docker engine.
+- Node.js 20 or newer.
+- PowerShell 7 is recommended on Windows.
 
-- DEV
-- STAGING
-- PROD
-
-without manually editing hosts files.
-
----
-
-## 📁 Group-Based Organization
-
-Organize domains into logical groups:
-
-- AI Stack
-- Monitoring
-- Developer Tools
-- Docker & Kubernetes
-- Networking
-- Blocked Domains
-
----
-
-## 🐳 Docker Auto Discovery
-
-Automatically detect running containers and generate local domains.
-
-Example:
-
-```text
-grafana     → grafana.local
-prometheus  → prometheus.local
-ollama      → ollama.local
-n8n         → n8n.local
-```
-
----
-
-## 💾 Automatic Backup & Restore
-
-Every apply operation creates a backup automatically.
-
-Rollback safely anytime.
-
----
-
-## ⚡ Apply Hosts Safely
-
-HostSwitch renders and applies hosts changes through a dedicated host manager.
-
-No more manually editing:
-
-```text
-/etc/hosts
-```
-
-or
-
-```text
-C:\Windows\System32\drivers\etc\hosts
-```
-
----
-
-## 🔌 REST API
-
-Automate HostSwitch using API endpoints.
-
-Examples:
-
-```http
-GET  /api/environments
-POST /api/environments/switch
-GET  /api/hosts
-POST /api/apply
-```
-
----
-
-## 🧠 Local DNS Mode (Roadmap)
-
-Future versions will support:
-
-- wildcard domains
-- local DNS server
-- DNS forwarding
-- DNS caching
-
-Example:
-
-```text
-*.local.dev
-```
-
----
-
-# 🚀 Why HostSwitch?
-
-Most hosts management tools are:
-
-- outdated
-- desktop-only
-- difficult to automate
-- not container-aware
-- lacking backups and organization
-
-HostSwitch combines:
-
-```text
-Hosts Management
-+ Docker Discovery
-+ Environment Switching
-+ Backups
-+ API Automation
-+ Modern UI
-```
-
-in one unified platform.
-
----
-
-# 🖥 Dashboard Preview
-
-## Main Dashboard
-
-<img src="./docs/images/dashboard-hero.png" alt="Dashboard" width="100%" />
-
----
-
-# ⚡ Quick Start
-
-## Requirements
-
-- Docker Desktop
-- Node.js 20+
-- PowerShell (Windows)
-
----
-
-## Start Development Environment
+### Run the App for Development
 
 ```powershell
 ./scripts/bootstrap.ps1 -Task dev
 ```
 
-Frontend:
+The frontend runs at:
 
 ```text
 http://localhost:5173
 ```
 
-Backend API:
+The backend API runs at:
 
 ```text
 http://localhost:18080
 ```
 
----
+In development, HostSwitch uses `data/hosts.preview` instead of your real system hosts file.
 
-# 🐳 Docker Deployment
-
-## Run with Docker
-
-```bash
-docker compose up -d
-```
-
----
-
-# 🏗 Repository Structure
-
-```text
-backend/              Go API and backend services
-frontend/             React dashboard
-scripts/              Bootstrap and development scripts
-data/                 Local development data and preview hosts
-docs/images/          Screenshots and demo assets
-docker-compose.yml
-```
-
----
-
-# 🛠 Local Development
-
-The main entry point is the PowerShell bootstrap script:
+### Run with Docker Compose
 
 ```powershell
-./scripts/bootstrap.ps1
+docker compose up -d --build
 ```
 
----
+## Bootstrap Tasks
 
-## Common Tasks
+The main project entry point is `scripts/bootstrap.ps1`.
 
 ```powershell
 ./scripts/bootstrap.ps1 -Task deps
@@ -221,340 +75,136 @@ The main entry point is the PowerShell bootstrap script:
 ./scripts/bootstrap.ps1 -Task ui-smoke
 ./scripts/bootstrap.ps1 -Task dockerize
 ./scripts/bootstrap.ps1 -Task pack
+./scripts/bootstrap.ps1 -Task deploy
 ./scripts/bootstrap.ps1 -Task dev
 ./scripts/bootstrap.ps1 -Task dev-down
-./scripts/bootstrap.ps1 -Task deploy
 ```
 
----
-
-## Clean Install
-
-For CI-style clean frontend installs:
-
-```powershell
-./scripts/bootstrap.ps1 -CleanInstall
-```
-
-Force dependency refresh:
+Useful dependency repair commands:
 
 ```powershell
 ./scripts/bootstrap.ps1 -Task deps -ForceDeps
+./scripts/bootstrap.ps1 -CleanInstall
 ```
 
----
+If Windows locks `frontend/node_modules/@esbuild/win32-x64/esbuild.exe`, close running Vite/Node processes and rerun the dependency task. Antivirus and editors can also hold that file briefly.
 
-## Backend Development
+## Import Model
 
-```bash
-cd backend
-go mod download
-go run ./cmd/hostswitch
-```
+HostSwitch treats the configured hosts file as the current machine state, not automatically as production.
 
----
+- `Import Current` imports valid entries into the active environment.
+- `Import All Envs` distributes categorized entries across DEV, STAGING, and PROD.
+- Imported entries are saved to SQLite with source and tag metadata.
+- System and malformed entries are filtered out before storage.
 
-## Frontend Development
+Examples of generated groups include:
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
----
-
-# 🔒 Safe Development Mode
-
-> HostSwitch does NOT modify your real hosts file in development mode.
-
-By default the backend uses:
-
-```text
-./data/hosts.preview
-```
-
-instead of the real system hosts file.
-
-This allows:
-
-- safe UI development
-- testing apply operations
-- backup validation
-- preview rendering
-
-without modifying system networking configuration.
-
----
-
-## Refresh Hosts Preview
-
-To refresh the preview from your current system hosts file:
-
-```powershell
-./scripts/bootstrap.ps1 -Task dev -RefreshHostsPreview
-```
-
----
-
-# 🧠 Smart Import System
-
-On first startup, HostSwitch:
-
-1. Reads the configured hosts file
-2. Creates an `initial-import` backup
-3. Imports valid non-system entries
-4. Categorizes entries automatically
-
-Examples:
-
-- Local Development
-- Docker & Kubernetes
+- AI Stack
 - Monitoring
 - Developer Tools
-- Blocked Domains
+- Docker & Kubernetes
+- Local Development
 - External Overrides
+- Blocked Domains
 
-Imported entries retain tags and source tracking.
+## Safety Model
 
-Later apply operations move imported domains into the HostSwitch managed block instead of duplicating them.
+Hosts file updates require elevated permissions on real machines. HostSwitch keeps the privileged surface narrow:
 
----
+- The web UI calls the backend API.
+- The backend validates domains and IP addresses.
+- Backups are created before managed hosts output is applied.
+- Development mode writes to `data/hosts.preview`.
+- Production deployments should mount the intended hosts path explicitly and run with only the permissions required for that path.
 
-# 🌍 Environment Import Logic
-
-The current hosts file is treated as the current machine state — not automatically as `PROD`.
-
-Use:
-
-```text
-Import Current
-```
-
-to import into the active environment.
-
-Or:
+Typical hosts paths:
 
 ```text
-Import All Envs
+Windows: C:\Windows\System32\drivers\etc\hosts
+Linux/macOS: /etc/hosts
 ```
 
-to distribute categorized entries across:
-
-- DEV
-- STAGING
-- PROD
-
----
-
-# 🐳 Docker Discovery
-
-HostSwitch can automatically detect Docker containers.
-
-Example:
-
-```text
-grafana     → grafana.local
-prometheus  → prometheus.local
-ollama      → ollama.local
-n8n         → n8n.local
-```
-
-Future support includes:
-
-- Docker labels
-- auto import rules
-- automatic grouping
-- Kubernetes discovery
-
----
-
-# ⚙ Configuration
+## Configuration
 
 | Variable | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `HOSTSWITCH_ADDR` | `:8080` | Backend listen address |
 | `HOSTSWITCH_DB_PATH` | `./data/hostswitch.db` | SQLite database path |
-| `HOSTSWITCH_DATA_DIR` | `./data` | Data directory for backups and preview hosts |
-| `HOSTSWITCH_HOSTS_PATH` | `./data/hosts.preview` | Hosts file target |
-| `HOSTSWITCH_ALLOWED_ORIGIN` | `http://localhost:5173` | CORS origin for frontend |
+| `HOSTSWITCH_DATA_DIR` | `./data` | Data directory for backups and hosts preview |
+| `HOSTSWITCH_HOSTS_PATH` | `./data/hosts.preview` | Hosts file path managed by the backend |
+| `HOSTSWITCH_ALLOWED_ORIGIN` | `http://localhost:5173` | Allowed frontend origin |
 
----
-
-# 📚 API Snapshot
-
-## Health
+## API Snapshot
 
 ```http
-GET /api/health
-```
-
----
-
-## Environments
-
-```http
+GET  /api/health
 GET  /api/environments
 POST /api/environments
 POST /api/environments/switch
-```
 
----
-
-## Groups
-
-```http
-GET   /api/groups?environment_id=...
+GET   /api/groups?environment_id=1
 POST  /api/groups
 PATCH /api/groups/{id}
-```
 
----
-
-## Hosts
-
-```http
-GET    /api/hosts?environment_id=...
+GET    /api/hosts?environment_id=1
 POST   /api/hosts
 POST   /api/hosts/import-system
 PATCH  /api/hosts/{id}
 DELETE /api/hosts/{id}
-```
 
----
-
-## Apply Hosts
-
-```http
 POST /api/apply
-```
-
----
-
-## Backups
-
-```http
 GET  /api/backups
 POST /api/backups
 POST /api/backups/restore
+GET  /api/docker/discover
 ```
 
----
-
-## Docker Discovery
-
-```http
-GET /api/docker/discover
-```
-
----
-
-# 🏗 Architecture
+## Repository Structure
 
 ```text
-HostSwitch
-│
-├── Backend (Go)
-│   ├── REST API
-│   ├── Hosts Manager
-│   ├── Backup Engine
-│   ├── Docker Discovery
-│   └── DNS Engine
-│
-├── Frontend (React + Tailwind)
-│
-├── Database (SQLite)
-│
-└── Deployment (Docker)
+backend/              Go API, storage, hosts manager, Docker discovery
+frontend/             React dashboard
+scripts/              Bootstrap, smoke tests, docs screenshot tooling
+docs/                 GitHub Pages site
+docs/images/          Public-safe screenshots
+data/                 Local development data, ignored by git
+docker-compose.yml    Container deployment
 ```
 
----
+## Documentation Screenshots
 
-# 🛣 Roadmap
+The checked-in GitHub Pages screenshots were generated from a sanitized demo hosts file. When regenerating screenshots, point the script at a demo backend instead of your live local data.
 
-## Phase 1 — Core Platform
+```powershell
+node ./scripts/capture-docs-screenshots.mjs
+```
 
-- hosts manager
-- environment switching
-- groups
-- backups
-- dashboard UI
-- Docker deployment
+The script expects a running frontend and backend. Set these if you use non-default ports:
 
----
+```powershell
+$env:HOSTSWITCH_UI_URL = "http://localhost:5175"
+$env:HOSTSWITCH_API_URL = "http://localhost:18082"
+```
 
-## Phase 2 — Smart Discovery
+## Verification
 
-- Docker auto discovery
-- Docker label support
-- service imports
+Before opening a pull request or publishing docs, run:
 
----
+```powershell
+./scripts/bootstrap.ps1 -Task test
+./scripts/bootstrap.ps1 -Task ui-smoke
+```
 
-## Phase 3 — Automation
+## Roadmap
 
-- API tokens
-- webhooks
-- automation support
+- Docker label import rules.
+- API tokens and webhooks.
+- Local DNS mode with wildcard domains and forwarding.
+- Git sync for team sharing.
+- Kubernetes discovery.
+- RBAC, SSO, and audit logs.
 
----
+## License
 
-## Phase 4 — Local DNS Mode
-
-- wildcard domains
-- DNS forwarding
-- local DNS server
-
----
-
-## Phase 5 — Enterprise Features
-
-- Git sync
-- RBAC
-- SSO
-- audit logs
-- Kubernetes discovery
-
----
-
-# 🤝 Contributing
-
-Contributions, ideas, and feature requests are welcome.
-
-Please open:
-
-- Issues
-- Discussions
-- Pull Requests
-
----
-
-# ⭐ Vision
-
-HostSwitch aims to become:
-
-> The modern local domain control center for developers.
-
-A unified platform for:
-
-- hosts management
-- Docker service routing
-- local DNS
-- environment switching
-- developer productivity
-
----
-
-# 📄 License
-
-MIT License
-
----
-
-<div align="center">
-
-### HostSwitch
-
-Modern local domain control center for developers and DevOps.
-
-</div>
+MIT License.
