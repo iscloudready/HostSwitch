@@ -1,0 +1,21 @@
+services:
+  hostswitch:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      HOSTSWITCH_ADDR: ":8080"
+      HOSTSWITCH_DB_PATH: "/data/hostswitch.db"
+      HOSTSWITCH_DATA_DIR: "/data"
+      HOSTSWITCH_HOSTS_PATH: "/host/hosts"
+      HOSTSWITCH_ALLOWED_ORIGIN: "http://localhost:5173"
+    volumes:
+      - hostswitch-data:/data
+      - /etc/hosts:/host/hosts
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+volumes:
+  hostswitch-data:
+

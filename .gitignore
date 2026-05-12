@@ -1,0 +1,9 @@
+data/
+data-ui-test/
+dist/
+node_modules/
+.npm-cache/
+*.tsbuildinfo
+.env
+.DS_Store
+*.exe
